@@ -1,0 +1,107 @@
+{
+    "version": 1,
+    "name": "controles",
+    "maps": [
+        {
+            "name": "Player",
+            "id": "292172ad-d44b-4c26-87a0-3c06c73d35c6",
+            "actions": [
+                {
+                    "name": "move",
+                    "type": "Value",
+                    "id": "3ca3d9cc-dd4e-4463-9006-1f45d675afe6",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "2D Vector",
+                    "id": "785afbbd-2c72-45c8-bca7-953704da017d",
+                    "path": "2DVector",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "move",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "up",
+                    "id": "37cf3811-a095-4f9b-85fc-ad4b73bdab3d",
+                    "path": "<Keyboard>/w",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "down",
+                    "id": "e3f9a421-d1d6-445f-bca4-79b6609348dd",
+                    "path": "<Keyboard>/s",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "left",
+                    "id": "a4de6730-837b-410f-82ed-ee19dd534f70",
+                    "path": "<Keyboard>/a",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "right",
+                    "id": "f831c2e9-1088-4d9d-8285-f535947d7fe2",
+                    "path": "<Keyboard>/d",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                }
+            ]
+        },
+        {
+            "name": "camera",
+            "id": "f00b753d-dcfa-48fa-a3a6-7d56d7eb419a",
+            "actions": [
+                {
+                    "name": "zoom",
+                    "type": "Value",
+                    "id": "6070fe19-2c09-4129-b6d6-3a249de40bf0",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "5488df77-0817-49d1-987c-e9bbf01f8e2b",
+                    "path": "<Mouse>/scroll/y",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "zoom",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
