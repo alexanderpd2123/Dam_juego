@@ -2,11 +2,13 @@ using UnityEngine;
 
 public class EnemyController : MonoBehaviour
 {
-    // ... (Variables de Stats, HP, etc.) ...
-    
-    private GameObject player;
+    // Info del Scriptable Object (SO)
     public EnemyStats Stats; 
     
+    // Referencia al jugador
+    private GameObject player;
+
+    // Stats propios
     private int maxHP;
     private int currentHP;
     private int damage;
@@ -14,9 +16,21 @@ public class EnemyController : MonoBehaviour
     private float baseSpeed; 
     private float currentSpeed; 
     
+    // -----------------------------------------------------------
+    // AÑADIDO: CONFIGURACIÓN ENEMIGO 4 (ENJAMBRE)
+    // -----------------------------------------------------------
+    [Header("Comportamiento Enjambre")]
+    [Tooltip("El prefab del Enemigo 1 (Zángano) a spawnear. Solo para el Enjambre.")]
+    public GameObject swarmPrefab; 
+    [Tooltip("Número de unidades a spawnear al inicio.")]
+    public int swarmCount = 10;
+    
+    
+    // ///////////////////////////////// Funciones Unity ///////////////////////////////
     
     void Awake()
     {
+        // Inicializar stats desde el Scriptable Object
         maxHP = Stats.MaxHP;
         currentHP = maxHP;
         damage = Stats.Damage;
@@ -29,6 +43,9 @@ public class EnemyController : MonoBehaviour
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
+        
+        // Ejecuta el comportamiento especial (Spawn del Enjambre) al aparecer
+        HandleUniqueBehavior();
     }
 
     void Update()
@@ -42,7 +59,8 @@ public class EnemyController : MonoBehaviour
         }
     }
     
-    // La función Recibirdano debe recibir un INT
+    // ///////////////////////////////// Lógica de Control y Daño ///////////////////////////////
+    
     public void Recibirdano(int danio)
     {
         int danioFinal = danio - defense;
@@ -71,5 +89,34 @@ public class EnemyController : MonoBehaviour
     public void RemoveSlow()
     {
         currentSpeed = baseSpeed;
+    }
+    
+    // -----------------------------------------------------------
+    // FUNCIÓN DE COMPORTAMIENTO ÚNICO (Para Enemigo 4)
+    // -----------------------------------------------------------
+
+    private void HandleUniqueBehavior()
+    {
+        // Si el 'swarmPrefab' está asignado, este es el Enemigo 4 (Enjambre) y debe spawnear
+        if (swarmPrefab != null)
+        {
+            SpawnSwarmUnits();
+        }
+    }
+
+    private void SpawnSwarmUnits()
+    {
+        // Spawnea 'swarmCount' unidades del Enemigo 1 (Zángano) alrededor del Enjambre
+        for (int i = 0; i < swarmCount; i++)
+        {
+            // Pequeño desplazamiento aleatorio para evitar que se superpongan
+            Vector3 spawnOffset = Random.insideUnitSphere * 1f;
+            spawnOffset.y = 0; // Aseguramos que se mantenga en el plano (si es 3D)
+            
+            Vector3 spawnPosition = transform.position + spawnOffset;
+
+            // ¡Instancia las unidades del Zángano!
+            Instantiate(swarmPrefab, spawnPosition, Quaternion.identity);
+        }
     }
 }

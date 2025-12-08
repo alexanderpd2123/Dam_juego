@@ -4,9 +4,7 @@ using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    /// <summary>
-    /// ///////////////////// Variables /////////////////////////
-    /// </summary>
+    // ... (Variables de Spawner se mantienen) ...
     [Header("Configuración de Spawn")]
     [SerializeField]
     private float spawnRadius = 10f;
@@ -16,35 +14,45 @@ public class EnemySpawner : MonoBehaviour
     private Transform player;
 
     [SerializeField]
-    private List<DataOleada> oleadas;
-
-
+    private List<DataOleada> oleadas; // Lista de las Oleadas (ahora más complejas)
     
-    ////////////////////////////////////// Funciones Unity//////////////////
-    void Start()
-    {
-        StartCoroutine(GenerarOleadas());
-    }
+    // ... (Funciones Unity se mantienen) ...
 
     ///////////////////////////// Funciones Propias ////////////////////
 
-    private IEnumerator spawn(DataOleada oleada)
+    /// <summary>
+    /// Spawnea todos los enemigos definidos en una única DataOleada.
+    /// </summary>
+    private IEnumerator spawn(DataOleada data)
     {
-        for (int i = 0; i < oleada.CantidadDeEnemigos; i++)
+        // 1. Itera sobre cada tipo de enemigo definido en el Scriptable Object
+        foreach (EnemyGroup enemyGroup in data.EnemyGroups)
         {
-            Vector2 randomPoint = Random.insideUnitCircle * spawnRadius;
-            Vector3 spawnPosition = player.position + new UnityEngine.Vector3(randomPoint.x, 0f, randomPoint.y);
-            Instantiate(oleada.EnemyPrefab, spawnPosition, Quaternion.identity);
-            yield return new WaitForSeconds(oleada.SpawnRate);
+            // 2. Itera la cantidad definida para ese tipo de enemigo
+            for (int i = 0; i < enemyGroup.Count; i++)
+            {
+                Vector2 randomPoint = Random.insideUnitCircle * spawnRadius;
+                Vector3 spawnPosition = player.position + new Vector3(randomPoint.x, 0f, randomPoint.y); 
+
+                // Instancia el enemigo
+                Instantiate(enemyGroup.EnemyPrefab, spawnPosition, Quaternion.identity);
+                
+                // 3. Espera la cadencia entre CADA spawn.
+                yield return new WaitForSeconds(data.SpawnRate); 
+            }
         }
     }
     
+    /// <summary>
+    /// Ejecuta la secuencia de oleadas.
+    /// </summary>
     public IEnumerator GenerarOleadas()
     {
         foreach(DataOleada oleadaActual in oleadas)
         {
             yield return new WaitForSeconds(oleadaActual.TiempoEntreOleadas);
-            StartCoroutine(spawn(oleadaActual));
+            // El spawn se ejecuta secuencialmente (primero E1, luego E2, etc.)
+            yield return StartCoroutine(spawn(oleadaActual)); 
         }
     }
 }
