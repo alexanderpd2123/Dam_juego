@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class EnemyController : MonoBehaviour
 {
@@ -11,19 +12,29 @@ public class EnemyController : MonoBehaviour
     // Stats propios
     private int maxHP;
     private int currentHP;
-    private int damage;
+    private int damage; // Daño que aplica al jugador
     private int defense;
     private float baseSpeed; 
     private float currentSpeed; 
     
     // -----------------------------------------------------------
-    // AÑADIDO: CONFIGURACIÓN ENEMIGO 4 (ENJAMBRE)
+    // CONFIGURACIÓN ENEMIGO 4 (ENJAMBRE)
     // -----------------------------------------------------------
     [Header("Comportamiento Enjambre")]
-    [Tooltip("El prefab del Enemigo 1 (Zángano) a spawnear. Solo para el Enjambre.")]
+    [Tooltip("El prefab del Enemigo 1 (Zángano) a spawnear.")]
     public GameObject swarmPrefab; 
     [Tooltip("Número de unidades a spawnear al inicio.")]
     public int swarmCount = 10;
+
+    // -----------------------------------------------------------
+    // FEEDBACK VISUAL DE GOLPE
+    // -----------------------------------------------------------
+    [Header("Feedback Visual")]
+    public Color hitColor = Color.red;
+    public float hitDuration = 0.1f;
+
+    private Renderer enemyRenderer;
+    private Color originalColor;
     
     
     // ///////////////////////////////// Funciones Unity ///////////////////////////////
@@ -33,18 +44,24 @@ public class EnemyController : MonoBehaviour
         // Inicializar stats desde el Scriptable Object
         maxHP = Stats.MaxHP;
         currentHP = maxHP;
-        damage = Stats.Damage;
+        damage = Stats.Damage; // ¡Aquí se carga el daño que aplica!
         defense = Stats.Defense;
         
         baseSpeed = Stats.Speed;
         currentSpeed = baseSpeed;
+
+        // Inicializar Renderer para el Feedback de Golpe
+        enemyRenderer = GetComponentInChildren<Renderer>();
+        if (enemyRenderer != null)
+        {
+            originalColor = enemyRenderer.material.color;
+        }
     }
     
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
         
-        // Ejecuta el comportamiento especial (Spawn del Enjambre) al aparecer
         HandleUniqueBehavior();
     }
 
@@ -59,6 +76,24 @@ public class EnemyController : MonoBehaviour
         }
     }
     
+    // -----------------------------------------------------------
+    // ¡NUEVO! LÓGICA DE DAÑO AL JUGADOR
+    // -----------------------------------------------------------
+
+    private void OnTriggerEnter(Collider other)
+    {
+        // Verificar si la colisión fue con el Jugador
+        PlayerStats playerStats = other.GetComponent<PlayerStats>();
+        
+        if (playerStats != null)
+        {
+            // Aplicar daño al jugador usando la stat de daño del enemigo.
+            playerStats.RecibirDmg(damage); 
+            
+            // Nota: Aquí se podría añadir un cooldown de daño para el enemigo.
+        }
+    }
+    
     // ///////////////////////////////// Lógica de Control y Daño ///////////////////////////////
     
     public void Recibirdano(int danio)
@@ -70,7 +105,11 @@ public class EnemyController : MonoBehaviour
         }
         currentHP -= danioFinal;
         
-        if (currentHP <= 0)
+        if (currentHP > 0)
+        {
+            StartCoroutine(HitFeedbackRoutine()); 
+        }
+        else
         {
             Morir();
         }
@@ -79,6 +118,18 @@ public class EnemyController : MonoBehaviour
     private void Morir()
     {
         Destroy(gameObject);
+    }
+    
+    // ... (Corrutinas de Feedback y Slow se mantienen) ...
+
+    private IEnumerator HitFeedbackRoutine()
+    {
+        if (enemyRenderer != null)
+        {
+            enemyRenderer.material.color = hitColor;
+            yield return new WaitForSeconds(hitDuration);
+            enemyRenderer.material.color = originalColor;
+        }
     }
     
     public void ApplySlow(float slowPercentage)
@@ -91,13 +142,8 @@ public class EnemyController : MonoBehaviour
         currentSpeed = baseSpeed;
     }
     
-    // -----------------------------------------------------------
-    // FUNCIÓN DE COMPORTAMIENTO ÚNICO (Para Enemigo 4)
-    // -----------------------------------------------------------
-
     private void HandleUniqueBehavior()
     {
-        // Si el 'swarmPrefab' está asignado, este es el Enemigo 4 (Enjambre) y debe spawnear
         if (swarmPrefab != null)
         {
             SpawnSwarmUnits();
@@ -106,16 +152,11 @@ public class EnemyController : MonoBehaviour
 
     private void SpawnSwarmUnits()
     {
-        // Spawnea 'swarmCount' unidades del Enemigo 1 (Zángano) alrededor del Enjambre
         for (int i = 0; i < swarmCount; i++)
         {
-            // Pequeño desplazamiento aleatorio para evitar que se superpongan
             Vector3 spawnOffset = Random.insideUnitSphere * 1f;
-            spawnOffset.y = 0; // Aseguramos que se mantenga en el plano (si es 3D)
-            
+            spawnOffset.y = 0; 
             Vector3 spawnPosition = transform.position + spawnOffset;
-
-            // ¡Instancia las unidades del Zángano!
             Instantiate(swarmPrefab, spawnPosition, Quaternion.identity);
         }
     }

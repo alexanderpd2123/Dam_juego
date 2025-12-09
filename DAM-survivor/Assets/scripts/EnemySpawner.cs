@@ -2,9 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// NOTA: Para que este script compile correctamente, la clase SpawnPattern
+// debe estar definida arriba o en un archivo separado.
+
 public class EnemySpawner : MonoBehaviour
 {
-    // ... (Variables de Spawner se mantienen) ...
+    /// <summary>
+    /// ///////////////////// Variables /////////////////////////
+    /// </summary>
     [Header("Configuración de Spawn")]
     [SerializeField]
     private float spawnRadius = 10f;
@@ -14,45 +19,56 @@ public class EnemySpawner : MonoBehaviour
     private Transform player;
 
     [SerializeField]
-    private List<DataOleada> oleadas; // Lista de las Oleadas (ahora más complejas)
+    // La lista ahora contiene los objetos DataOleada complejos
+    private List<DataOleada> oleadas; 
     
-    // ... (Funciones Unity se mantienen) ...
+    ////////////////////////////////////// Funciones Unity//////////////////
+    void Start()
+    {
+        StartCoroutine(GenerarOleadas());
+    }
 
     ///////////////////////////// Funciones Propias ////////////////////
 
     /// <summary>
-    /// Spawnea todos los enemigos definidos en una única DataOleada.
+    /// Coroutine para ejecutar un patrón de spawn específico (Ej: 60 E1 cada 2s, 4 veces).
     /// </summary>
-    private IEnumerator spawn(DataOleada data)
+    private IEnumerator ExecutePattern(SpawnPattern pattern)
     {
-        // 1. Itera sobre cada tipo de enemigo definido en el Scriptable Object
-        foreach (EnemyGroup enemyGroup in data.EnemyGroups)
+        for (int r = 0; r < pattern.Repetitions; r++)
         {
-            // 2. Itera la cantidad definida para ese tipo de enemigo
-            for (int i = 0; i < enemyGroup.Count; i++)
+            for (int i = 0; i < pattern.Count; i++)
             {
                 Vector2 randomPoint = Random.insideUnitCircle * spawnRadius;
                 Vector3 spawnPosition = player.position + new Vector3(randomPoint.x, 0f, randomPoint.y); 
 
-                // Instancia el enemigo
-                Instantiate(enemyGroup.EnemyPrefab, spawnPosition, Quaternion.identity);
+                Instantiate(pattern.EnemyPrefab, spawnPosition, Quaternion.identity);
                 
-                // 3. Espera la cadencia entre CADA spawn.
-                yield return new WaitForSeconds(data.SpawnRate); 
+                // ¡LA CLAVE! Usa el SpawnRate ESPECÍFICO del patrón
+                yield return new WaitForSeconds(pattern.SpawnRate); 
             }
         }
     }
     
     /// <summary>
-    /// Ejecuta la secuencia de oleadas.
+    /// Ejecuta la secuencia completa de oleadas (DataOleada).
     /// </summary>
     public IEnumerator GenerarOleadas()
     {
         foreach(DataOleada oleadaActual in oleadas)
         {
+            // 1. Pausa antes de la oleada
             yield return new WaitForSeconds(oleadaActual.TiempoEntreOleadas);
-            // El spawn se ejecuta secuencialmente (primero E1, luego E2, etc.)
-            yield return StartCoroutine(spawn(oleadaActual)); 
+            
+            // 2. Disparar todos los patrones internos de la oleada en PARALELO
+            foreach(SpawnPattern pattern in oleadaActual.SimultaneousPatterns)
+            {
+                // StartCoroutine dispara el patrón y pasa inmediatamente al siguiente patrón/pausa
+                StartCoroutine(ExecutePattern(pattern));
+            }
+            
+            // 3. Esperar la duración total de la oleada antes de la siguiente DataOleada
+            yield return new WaitForSeconds(oleadaActual.DurationAfterSpawn);
         }
     }
 }

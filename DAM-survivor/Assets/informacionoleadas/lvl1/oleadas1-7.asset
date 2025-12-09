@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c392a70794c00e94fa07291bc922169b, type: 3}
+  m_Name: oleadas1-7
+  m_EditorClassIdentifier: Assembly-CSharp::DataOleada
+  SimultaneousPatterns:
+  - EnemyPrefab: {fileID: 4696562234508048836, guid: 79700674af6561444b3787d0379954f6, type: 3}
+    Count: 20
+    SpawnRate: 1
+    Repetitions: 4
+  TiempoEntreOleadas: 5
+  DurationAfterSpawn: 30
