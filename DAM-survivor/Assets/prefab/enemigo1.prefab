@@ -132,6 +132,9 @@ MonoBehaviour:
   swarmCount: 10
   hitColor: {r: 1, g: 1, b: 1, a: 1}
   hitDuration: 0.1
+  orbeVerdePrefab: {fileID: 7413484784138218633, guid: 49e4cbb8ff72a5049825fa003f9b0e65, type: 3}
+  orbeAzulPrefab: {fileID: 996936366325194697, guid: 0b87ede360f1b8c44af22b78ea40c811, type: 3}
+  orbeDoradoPrefab: {fileID: 7737506914871140214, guid: 62051ca3090bb6941a2eccaab6db0cdf, type: 3}
 --- !u!54 &6295285543177041924
 Rigidbody:
   m_ObjectHideFlags: 0

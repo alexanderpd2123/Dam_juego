@@ -1,5 +1,6 @@
 using UnityEngine;
-using System.Collections;
+using System.Collections; 
+using Random = UnityEngine.Random; // Usar el Random de Unity
 
 public class EnemyController : MonoBehaviour
 {
@@ -12,7 +13,7 @@ public class EnemyController : MonoBehaviour
     // Stats propios
     private int maxHP;
     private int currentHP;
-    private int damage; // Daño que aplica al jugador
+    private int damage; 
     private int defense;
     private float baseSpeed; 
     private float currentSpeed; 
@@ -21,7 +22,7 @@ public class EnemyController : MonoBehaviour
     // CONFIGURACIÓN ENEMIGO 4 (ENJAMBRE)
     // -----------------------------------------------------------
     [Header("Comportamiento Enjambre")]
-    [Tooltip("El prefab del Enemigo 1 (Zángano) a spawnear.")]
+    [Tooltip("El prefab del Enemigo 1 (Zángano) a spawnear. Solo para el Enjambre.")]
     public GameObject swarmPrefab; 
     [Tooltip("Número de unidades a spawnear al inicio.")]
     public int swarmCount = 10;
@@ -35,6 +36,14 @@ public class EnemyController : MonoBehaviour
 
     private Renderer enemyRenderer;
     private Color originalColor;
+
+    // -----------------------------------------------------------
+    // ¡NUEVO! BOTÍN DE EXP VARIADO (REQUISITO 14)
+    // -----------------------------------------------------------
+    [Header("Botín de EXP (Requisito 14)")]
+    public GameObject orbeVerdePrefab;  // Valor: 10 EXP (60%)
+    public GameObject orbeAzulPrefab;   // Valor: 50 EXP (30%)
+    public GameObject orbeDoradoPrefab; // Valor: 100 EXP (10%)
     
     
     // ///////////////////////////////// Funciones Unity ///////////////////////////////
@@ -44,7 +53,7 @@ public class EnemyController : MonoBehaviour
         // Inicializar stats desde el Scriptable Object
         maxHP = Stats.MaxHP;
         currentHP = maxHP;
-        damage = Stats.Damage; // ¡Aquí se carga el daño que aplica!
+        damage = Stats.Damage; 
         defense = Stats.Defense;
         
         baseSpeed = Stats.Speed;
@@ -76,21 +85,16 @@ public class EnemyController : MonoBehaviour
         }
     }
     
-    // -----------------------------------------------------------
-    // ¡NUEVO! LÓGICA DE DAÑO AL JUGADOR
-    // -----------------------------------------------------------
-
     private void OnTriggerEnter(Collider other)
     {
-        // Verificar si la colisión fue con el Jugador
         PlayerStats playerStats = other.GetComponent<PlayerStats>();
         
         if (playerStats != null)
         {
-            // Aplicar daño al jugador usando la stat de daño del enemigo.
             playerStats.RecibirDmg(damage); 
             
-            // Nota: Aquí se podría añadir un cooldown de daño para el enemigo.
+            // Opcional: Si quieres que el enemigo se destruya inmediatamente después de golpear:
+            // Morir(); 
         }
     }
     
@@ -99,10 +103,8 @@ public class EnemyController : MonoBehaviour
     public void Recibirdano(int danio)
     {
         int danioFinal = danio - defense;
-        if (danioFinal < 0)
-        {
-            danioFinal = 0;
-        }
+        if (danioFinal < 0) danioFinal = 0;
+
         currentHP -= danioFinal;
         
         if (currentHP > 0)
@@ -117,10 +119,48 @@ public class EnemyController : MonoBehaviour
 
     private void Morir()
     {
+        // ¡NUEVO! Generar el orbe de EXP al morir
+        SpawnOrbeDeExperiencia();
+        
         Destroy(gameObject);
     }
     
-    // ... (Corrutinas de Feedback y Slow se mantienen) ...
+    // -----------------------------------------------------------
+    // FUNCIÓN PARA GENERAR EL ORBE SEGÚN PROBABILIDAD (REQUISITO 14)
+    // -----------------------------------------------------------
+    private void SpawnOrbeDeExperiencia()
+    {
+        // Si no tenemos al menos el orbe básico, salimos.
+        if (orbeVerdePrefab == null) return;
+        
+        float randomValue = Random.value; // Valor entre 0.0 y 1.0
+        
+        GameObject prefabToSpawn = null;
+        
+        // 60% de probabilidad (0.0 a 0.6)
+        if (randomValue <= 0.6f)
+        {
+            prefabToSpawn = orbeVerdePrefab;
+        }
+        // 30% de probabilidad (0.6 a 0.9)
+        else if (randomValue <= 0.9f)
+        {
+            prefabToSpawn = orbeAzulPrefab;
+        }
+        // 10% de probabilidad (0.9 a 1.0)
+        else
+        {
+            prefabToSpawn = orbeDoradoPrefab;
+        }
+
+        // Instanciamos el orbe si se eligió uno
+        if (prefabToSpawn != null)
+        {
+            Instantiate(prefabToSpawn, transform.position, Quaternion.identity);
+        }
+    }
+
+    // ... (El resto de funciones como HitFeedbackRoutine, ApplySlow, etc. se mantienen) ...
 
     private IEnumerator HitFeedbackRoutine()
     {

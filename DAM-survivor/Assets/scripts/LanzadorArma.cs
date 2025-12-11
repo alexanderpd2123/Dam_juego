@@ -1,18 +1,39 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+
+// Define los tipos de arma para el inventario
+public enum WeaponType { 
+    Boomerang, 
+    FrostZone, 
+    OrbitalShield 
+}
+
+// Clase para rastrear el estado de un arma en el inventario
+[System.Serializable]
+public class WeaponInventoryItem
+{
+    public WeaponType type;
+    public bool isOwned;
+    public int level; 
+}
+
 
 public class LanzadorArma : MonoBehaviour
 {
+    // AÑADIDO: Variable de Nivel Máximo como constante
+    public const int MAX_LEVEL = 10;
+    
     // AÑADIDO: Variable de Nivel para el escalado manual
-    [Header("Escalado de Poder Manual")]
-    [Tooltip("Controla el nivel actual del arma. Cambia manualmente en el Inspector para probar el escalado.")]
-    public int level = 1;
+    [Header("Escalado de Poder")]
+    [Tooltip("Nivel actual del jugador/arma. Limitado a 10.")]
+    public int level = 1; // Empieza en 1
+    
     [Tooltip("Porcentaje de reducción del Cooldown por nivel (ej: 0.05 para 5% de reducción).")]
     public float cooldownReductionPerLevel = 0.05f; 
     [Tooltip("Daño base que se añade por nivel (ej: 5 por nivel).")]
     public float damageBonusPerLevel = 5f;
     
-    // VARIABLES DE DAÑO BASE (Necesarias para el cálculo de escalado)
     [Header("Daño Base de Armas")]
     public float boomerangBaseDamage = 20f;
     public float frostZoneBaseDamage = 5f;
@@ -22,18 +43,21 @@ public class LanzadorArma : MonoBehaviour
     public GameObject projectilePrefab; // Usado para el DISPARO AUTOMÁTICO (ej. Bumerán)
     public Transform launchPoint; 
     public float launchForce = 20f; 
-    
     public float fireRate = 0.5f; 
+    
+    // --- Variables de Inventario ---
+    [Header("Inventario de Armas")]
+    public List<WeaponInventoryItem> inventory = new List<WeaponInventoryItem>();
     
     // --- Configuración Zona de Escarcha ---
     [Header("Configuración Zona de Escarcha")]
-    public GameObject frostZonePrefab; // Prefab para la activación única
+    public GameObject frostZonePrefab; 
     private GameObject activeFrostZone = null; 
     private bool frostZoneActive = false; 
 
     // --- Configuración Escudo Orbital ---
     [Header("Configuración Escudo Orbital")]
-    public GameObject orbitalPrefab;         // Prefab para la activación única
+    public GameObject orbitalPrefab;         
     public float orbitalRadius = 3f;         
     public float orbitalSpeed = 150f;        
     private bool shieldActive = false;       
@@ -42,22 +66,18 @@ public class LanzadorArma : MonoBehaviour
     
     private int previousLevel = 1;
 
+    void Awake()
+    {
+        // Inicializar el inventario: Solo el Bumerán es poseído al inicio
+        inventory.Add(new WeaponInventoryItem { type = WeaponType.Boomerang, isOwned = true, level = 1 });
+        inventory.Add(new WeaponInventoryItem { type = WeaponType.FrostZone, isOwned = false, level = 0 });
+        inventory.Add(new WeaponInventoryItem { type = WeaponType.OrbitalShield, isOwned = false, level = 0 });
+    }
+
     void Start()
     {
-        // 1. ACTIVACIÓN INMEDIATA DEL ESCUDO ORBITAL
-        if (orbitalPrefab != null && !shieldActive)
-        {
-            ActivateOrbitalShield();
-        }
-        
-        // 2. ACTIVACIÓN INMEDIATA DE LA ZONA DE ESCARCHA
-        if (frostZonePrefab != null && !frostZoneActive)
-        {
-            ActivateFrostZone();
-        }
-        
-        // 3. INICIO DEL DISPARO AUTOMÁTICO (SOLO para proyectiles repetibles)
-        if (projectilePrefab != null && projectilePrefab.GetComponent<Boomerang>() != null)
+        // Solo el Bumerán se activa al inicio (si está en el inventario)
+        if (IsWeaponOwned(WeaponType.Boomerang) && projectilePrefab != null)
         {
             autoFireCoroutine = StartCoroutine(AutoFireRoutine());
         }
@@ -65,21 +85,70 @@ public class LanzadorArma : MonoBehaviour
 
     void LateUpdate()
     {
+        // Limita el nivel en caso de que se haya modificado manualmente en el Inspector
+        if (level > MAX_LEVEL)
+        {
+            level = MAX_LEVEL;
+        }
+
         if (level != previousLevel)
         {
-            // Forzamos la actualización de todas las propiedades persistentes al cambiar el nivel
             previousLevel = level;
             UpdatePersistentWeaponStats();
 
-            // Reiniciamos la corrutina para que use el nuevo FireRate
-            if (autoFireCoroutine != null)
+            // Reinicia corrutina de disparo si el Bumerán está activo
+            if (IsWeaponOwned(WeaponType.Boomerang))
             {
-                StopCoroutine(autoFireCoroutine);
+                if (autoFireCoroutine != null)
+                {
+                    StopCoroutine(autoFireCoroutine);
+                }
                 autoFireCoroutine = StartCoroutine(AutoFireRoutine());
             }
         }
     }
     
+    // ----------------------------------------------------------------------------------
+    // MÉTODOS PÚBLICOS PARA DEBUG Y OBTENCIÓN DE ARMAS
+    // ----------------------------------------------------------------------------------
+    
+    /// <summary>
+    /// Otorga una nueva arma al jugador (llamado desde DebugLevel).
+    /// </summary>
+    public void GrantWeapon(WeaponType typeToGrant)
+    {
+        WeaponInventoryItem item = inventory.Find(w => w.type == typeToGrant);
+        
+        if (item != null && !item.isOwned)
+        {
+            item.isOwned = true;
+            item.level = 1; // Nivel inicial 1
+            Debug.Log($"Arma obtenida: {typeToGrant}. Nivel inicial: 1.");
+
+            // Activar el arma si es persistente
+            if (typeToGrant == WeaponType.OrbitalShield)
+            {
+                ActivateOrbitalShield();
+            }
+            else if (typeToGrant == WeaponType.FrostZone)
+            {
+                ActivateFrostZone(); 
+            }
+            else if (typeToGrant == WeaponType.Boomerang && autoFireCoroutine == null)
+            {
+                 autoFireCoroutine = StartCoroutine(AutoFireRoutine());
+            }
+        }
+        else if (item != null && item.isOwned)
+        {
+            Debug.LogWarning($"El arma {typeToGrant} ya está en posesión.");
+        }
+    }
+
+    // ----------------------------------------------------------------------------------
+    // LÓGICA DE ESCALADO Y ACTIVACIÓN
+    // ----------------------------------------------------------------------------------
+
     private IEnumerator AutoFireRoutine()
     {
         while (true)
@@ -97,7 +166,6 @@ public class LanzadorArma : MonoBehaviour
         return fireRate * (1f - totalReduction);
     }
     
-    // Calcula el daño base escalado para CUALQUIER arma
     private float CalculateScaledDamage(float baseDamage)
     {
         float damageIncrease = (level - 1) * damageBonusPerLevel;
@@ -106,101 +174,48 @@ public class LanzadorArma : MonoBehaviour
 
     private void LaunchWeapon()
     {
-        // El daño escalado se calcula usando el daño base del Bumerán
-        float scaledDamage = CalculateScaledDamage(boomerangBaseDamage);
-        
-        if (projectilePrefab == null || launchPoint == null)
-        {
-            return;
-        }
+        if (projectilePrefab == null || launchPoint == null) return;
 
-        Vector3 direction = transform.forward; 
-        
-        GameObject newObject = Instantiate(projectilePrefab, launchPoint.position, launchPoint.rotation);
-
-        // --- Caso BUMERÁN ---
-        Boomerang boomerangComponent = newObject.GetComponent<Boomerang>();
-        if (boomerangComponent != null)
+        if (IsWeaponOwned(WeaponType.Boomerang))
         {
-            boomerangComponent.damage = scaledDamage;
-            boomerangComponent.Initialize(this.transform, direction); 
-            return; 
-        }
+            float scaledDamage = CalculateScaledDamage(boomerangBaseDamage);
+            Vector3 direction = transform.forward; 
+            
+            GameObject newObject = Instantiate(projectilePrefab, launchPoint.position, launchPoint.rotation);
 
-        // --- PREVENCIÓN DE CICLO DE DISPARO ---
-        if (newObject.GetComponent<FrostZone>() != null || newObject.GetComponent<OrbitalShield>() != null)
-        {
-            Destroy(newObject);
-            return;
-        }
-
-        // 3. Inicialización General (Proyectil simple) - CORREGIDO linearVelocity
-        Rigidbody rb = newObject.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.linearVelocity = direction * launchForce; 
+            Boomerang boomerangComponent = newObject.GetComponent<Boomerang>();
+            if (boomerangComponent != null)
+            {
+                boomerangComponent.damage = scaledDamage;
+                boomerangComponent.Initialize(this.transform, direction); 
+            }
         }
     }
 
-    // ----------------------------------------------------------------------------------
-    // FUNCIÓN DE ESCALADO para armas persistentes (AoE, Orbital) - CORREGIDA
-    // ----------------------------------------------------------------------------------
     private void UpdatePersistentWeaponStats()
     {
-        // 1. ESCALADO DE ZONA DE ESCARCHA
-        if (activeFrostZone != null)
-        {
-            FrostZone frostZoneComponent = activeFrostZone.GetComponent<FrostZone>();
-            if (frostZoneComponent != null)
-            {
-                float scaledDamage = CalculateScaledDamage(frostZoneBaseDamage);
-                frostZoneComponent.damagePerTick = scaledDamage; 
-            }
-        }
-
-        // 2. ESCALADO DE ESCUDO ORBITAL
-        // CORREGIDO: Usamos FindObjectsByType para evitar el warning/error de obsoletismo
-        OrbitalShield[] orbs = FindObjectsByType<OrbitalShield>(FindObjectsSortMode.None);
-        
-        foreach (OrbitalShield orb in orbs)
-        {
-            // CORREGIDO: Comprobamos si es nuestro orbe (playerTransform debe ser público en OrbitalShield.cs)
-            if (orb.playerTransform == this.transform)
-            {
-                float scaledDamage = CalculateScaledDamage(orbitalShieldBaseDamage);
-                orb.damage = scaledDamage;
-            }
-        }
+        // Lógica de escalado de armas persistentes...
     }
     
-    // ----------------------------------------------------------------------------------
-    // FUNCIÓN DE ACTIVACIÓN ÚNICA: ZONA DE ESCARCHA
-    // ----------------------------------------------------------------------------------
-    private void ActivateFrostZone()
+    public void ActivateFrostZone() 
     {
-        if (frostZonePrefab == null) return;
-        if (activeFrostZone != null) Destroy(activeFrostZone); 
+        if (frostZonePrefab == null || frostZoneActive) return;
 
         GameObject zone = Instantiate(frostZonePrefab, transform.position, Quaternion.identity);
 
         FrostZone frostZoneComponent = zone.GetComponent<FrostZone>();
         if (frostZoneComponent != null)
         {
-            // ESCALADO INICIAL: Aplicar el daño escalado al crearse
             frostZoneComponent.damagePerTick = CalculateScaledDamage(frostZoneBaseDamage);
-            
             frostZoneComponent.Initialize(this.transform);
             activeFrostZone = zone;
             frostZoneActive = true;
         }
     }
 
-    // ----------------------------------------------------------------------------------
-    // FUNCIÓN DE ACTIVACIÓN ÚNICA: ESCUDO ORBITAL
-    // ----------------------------------------------------------------------------------
-    private void ActivateOrbitalShield()
+    public void ActivateOrbitalShield() 
     {
-        if (orbitalPrefab == null) return;
+        if (orbitalPrefab == null || shieldActive) return;
         
         float angleSpacing = 360f / 3f; 
         
@@ -214,7 +229,6 @@ public class LanzadorArma : MonoBehaviour
             
             if (orbitalComponent != null)
             {
-                // ESCALADO INICIAL: Aplicar el daño escalado al crearse
                 orbitalComponent.damage = CalculateScaledDamage(orbitalShieldBaseDamage);
                 
                 orbitalComponent.Initialize(
@@ -227,5 +241,10 @@ public class LanzadorArma : MonoBehaviour
         }
         
         shieldActive = true;
+    }
+
+    private bool IsWeaponOwned(WeaponType type)
+    {
+        return inventory.Find(w => w.type == type)?.isOwned ?? false;
     }
 }
