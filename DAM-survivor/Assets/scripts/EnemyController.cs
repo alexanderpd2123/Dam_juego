@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections; 
-using Random = UnityEngine.Random; // Usar el Random de Unity
+using Random = UnityEngine.Random; 
 
 public class EnemyController : MonoBehaviour
 {
@@ -22,9 +22,7 @@ public class EnemyController : MonoBehaviour
     // CONFIGURACIÓN ENEMIGO 4 (ENJAMBRE)
     // -----------------------------------------------------------
     [Header("Comportamiento Enjambre")]
-    [Tooltip("El prefab del Enemigo 1 (Zángano) a spawnear. Solo para el Enjambre.")]
     public GameObject swarmPrefab; 
-    [Tooltip("Número de unidades a spawnear al inicio.")]
     public int swarmCount = 10;
 
     // -----------------------------------------------------------
@@ -38,12 +36,15 @@ public class EnemyController : MonoBehaviour
     private Color originalColor;
 
     // -----------------------------------------------------------
-    // ¡NUEVO! BOTÍN DE EXP VARIADO (REQUISITO 14)
+    // BOTÍN DE EXP VARIADO (REQUISITO 14)
     // -----------------------------------------------------------
-    [Header("Botín de EXP (Requisito 14)")]
-    public GameObject orbeVerdePrefab;  // Valor: 10 EXP (60%)
-    public GameObject orbeAzulPrefab;   // Valor: 50 EXP (30%)
-    public GameObject orbeDoradoPrefab; // Valor: 100 EXP (10%)
+    [Header("Botín de EXP")]
+    [Tooltip("Prefab del Orbe Verde (10 EXP, 60% prob.).")]
+    public GameObject orbeVerdePrefab;  
+    [Tooltip("Prefab del Orbe Azul (50 EXP, 30% prob.).")]
+    public GameObject orbeAzulPrefab;   
+    [Tooltip("Prefab del Orbe Dorado (100 EXP, 10% prob.).")]
+    public GameObject orbeDoradoPrefab; 
     
     
     // ///////////////////////////////// Funciones Unity ///////////////////////////////
@@ -59,7 +60,6 @@ public class EnemyController : MonoBehaviour
         baseSpeed = Stats.Speed;
         currentSpeed = baseSpeed;
 
-        // Inicializar Renderer para el Feedback de Golpe
         enemyRenderer = GetComponentInChildren<Renderer>();
         if (enemyRenderer != null)
         {
@@ -92,9 +92,6 @@ public class EnemyController : MonoBehaviour
         if (playerStats != null)
         {
             playerStats.RecibirDmg(damage); 
-            
-            // Opcional: Si quieres que el enemigo se destruya inmediatamente después de golpear:
-            // Morir(); 
         }
     }
     
@@ -119,21 +116,18 @@ public class EnemyController : MonoBehaviour
 
     private void Morir()
     {
-        // ¡NUEVO! Generar el orbe de EXP al morir
         SpawnOrbeDeExperiencia();
-        
         Destroy(gameObject);
     }
     
     // -----------------------------------------------------------
-    // FUNCIÓN PARA GENERAR EL ORBE SEGÚN PROBABILIDAD (REQUISITO 14)
+    // FUNCIÓN PARA GENERAR EL ORBE SEGÚN PROBABILIDAD 
     // -----------------------------------------------------------
     private void SpawnOrbeDeExperiencia()
     {
-        // Si no tenemos al menos el orbe básico, salimos.
         if (orbeVerdePrefab == null) return;
         
-        float randomValue = Random.value; // Valor entre 0.0 y 1.0
+        float randomValue = Random.value; 
         
         GameObject prefabToSpawn = null;
         
@@ -153,15 +147,13 @@ public class EnemyController : MonoBehaviour
             prefabToSpawn = orbeDoradoPrefab;
         }
 
-        // Instanciamos el orbe si se eligió uno
         if (prefabToSpawn != null)
         {
             Instantiate(prefabToSpawn, transform.position, Quaternion.identity);
         }
     }
 
-    // ... (El resto de funciones como HitFeedbackRoutine, ApplySlow, etc. se mantienen) ...
-
+    // ... (El resto de funciones se mantienen) ...
     private IEnumerator HitFeedbackRoutine()
     {
         if (enemyRenderer != null)

@@ -50,7 +50,7 @@ public class PlayerStats : MonoBehaviour
             originalColor = playerRenderer.material.color;
         }
 
-        // Obtener la referencia al LanzadorArma (Asumiendo que está en el mismo GameObject)
+        // Obtener la referencia al LanzadorArma 
         lanzadorArma = GetComponent<LanzadorArma>();
         if (lanzadorArma == null)
         {
@@ -58,17 +58,14 @@ public class PlayerStats : MonoBehaviour
         }
     }
     
-    void Update()
-    {
-        // Opcional: Podrías añadir lógica aquí para debug de EXP si es necesario.
-    }
+    // ... (Update se mantiene) ...
     
     
     //////////////////////////////// Funciones de Progresión /////////////////////////
     
     /// <summary>
     /// Añade experiencia y comprueba si se sube de nivel.
-    /// Esta función debe ser llamada desde el script de muerte del enemigo.
+    /// Esta función debe ser llamada desde OrbeExperiencia.cs.
     /// </summary>
     public void GainEXP(int expAmount)
     {
@@ -101,13 +98,13 @@ public class PlayerStats : MonoBehaviour
     }
 
     /// <summary>
-    /// Aplica la subida de nivel, escala la dificultad de EXP y notifica al LanzadorArma.
+    /// Aplica la subida de nivel.
     /// </summary>
     private void LevelUp()
     {
         if (lanzadorArma.level >= LanzadorArma.MAX_LEVEL) return;
         
-        // 1. Incrementar el nivel en LanzadorArma (el cual escala las stats automáticamente)
+        // 1. Incrementar el nivel en LanzadorArma 
         lanzadorArma.level++;
         
         // 2. Restar la EXP requerida
