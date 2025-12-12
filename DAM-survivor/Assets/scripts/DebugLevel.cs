@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.InputSystem; // Necesario para el nuevo sistema de Input de Unity
 using System.Collections.Generic;
 using System.Linq; 
 
@@ -7,12 +7,12 @@ public class DebugLevel : MonoBehaviour
 {
     // --- Referencias Necesarias ---
     [Header("Referencias de Sistema")]
-    public LanzadorArma lanzadorArma; 
+    public LanzadorArma lanzadorArma; // Referencia al script principal que gestiona las armas
     
     // --- Input Action Asset ---
-    private Controles controls; 
+    private Controles controls; // Instancia del asset de Input de Unity (Controles)
     
-    // Lista de las armas que el debug puede otorgar (las que no son el Bumerán)
+    // Lista de las armas que se pueden otorgar mediante comandos de debug (excluye las iniciales)
     private readonly List<WeaponType> unlockableWeapons = new List<WeaponType>
     {
         WeaponType.OrbitalShield,
@@ -22,8 +22,9 @@ public class DebugLevel : MonoBehaviour
     
     void Awake()
     {
-        controls = new Controles();
-
+        controls = new Controles(); // Inicializa el sistema de Input
+        
+        // Bloque de seguridad: intenta encontrar LanzadorArma si no fue asignado en el Inspector
         if (lanzadorArma == null)
         {
             GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -36,18 +37,18 @@ public class DebugLevel : MonoBehaviour
 
     void OnEnable()
     {
-        controls.Debug.Enable();
+        controls.Debug.Enable(); // Activa el mapa de acciones 'Debug'
         
-        // Tecla '1': Otorga la siguiente arma no poseída
+        // Asigna la función 'GiveNextAvailableWeapon' a la acción 'GiveWeapon' (Tecla '1')
         controls.Debug.GiveWeapon.performed += context => GiveNextAvailableWeapon();
 
-        // Tecla '2': Sube de nivel
+        // Asigna la función 'LevelUpCurrentWeapon' a la acción 'LevelUp' (Tecla '2')
         controls.Debug.LevelUp.performed += context => LevelUpCurrentWeapon();
     }
 
     void OnDisable()
     {
-        controls.Debug.Disable();
+        controls.Debug.Disable(); // Desactiva el mapa de acciones 'Debug'
     }
 
 
@@ -56,6 +57,7 @@ public class DebugLevel : MonoBehaviour
     /// </summary>
     private void GiveNextAvailableWeapon()
     {
+        // Verifica la referencia esencial
         if (lanzadorArma == null)
         {
             Debug.LogError("[DEBUG ERROR] Falta la referencia a LanzadorArma.");
@@ -64,7 +66,7 @@ public class DebugLevel : MonoBehaviour
 
         WeaponType? weaponToGrant = null;
         
-        // Busca la primera arma de la lista que no esté marcada como isOwned
+        // Busca la primera arma en la lista 'unlockableWeapons' que no haya sido obtenida (isOwned == false)
         foreach (var type in unlockableWeapons)
         {
             WeaponInventoryItem item = lanzadorArma.inventory.Find(w => w.type == type);
@@ -72,10 +74,11 @@ public class DebugLevel : MonoBehaviour
             if (item != null && !item.isOwned)
             {
                 weaponToGrant = type;
-                break; 
+                break; // Detiene la búsqueda al encontrar la primera disponible
             }
         }
 
+        // Si se encontró un arma, la otorga
         if (weaponToGrant.HasValue)
         {
             lanzadorArma.GrantWeapon(weaponToGrant.Value);
@@ -83,6 +86,7 @@ public class DebugLevel : MonoBehaviour
         }
         else
         {
+            // Mensaje si ya se tienen todas las armas
             Debug.LogWarning("[DEBUG] No quedan más armas para desbloquear.");
         }
     }
@@ -94,14 +98,15 @@ public class DebugLevel : MonoBehaviour
     {
         if (lanzadorArma != null)
         {
-            // Aplicar el límite máximo de nivel (10)
+            // Comprueba que no se exceda el nivel máximo (LanzadorArma.MAX_LEVEL)
             if (lanzadorArma.level < LanzadorArma.MAX_LEVEL)
             {
-                lanzadorArma.level++; 
+                lanzadorArma.level++; // Incrementa el nivel
                 Debug.Log($"[DEBUG] Nivel subido a: {lanzadorArma.level}. Estadísticas actualizadas.");
             }
             else
             {
+                // Mensaje si ya está en el nivel máximo
                 Debug.LogWarning($"[DEBUG] Nivel máximo ({LanzadorArma.MAX_LEVEL}) alcanzado. Nivel: {lanzadorArma.level}.");
             }
         } 

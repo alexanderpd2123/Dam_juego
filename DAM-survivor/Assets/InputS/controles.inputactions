@@ -149,6 +149,34 @@
                     "isPartOfComposite": false
                 }
             ]
+        },
+        {
+            "name": "Pausa",
+            "id": "5afaf589-02e4-4fc6-8287-dc496d965f00",
+            "actions": [
+                {
+                    "name": "pausa",
+                    "type": "Button",
+                    "id": "c9527b6e-45d8-45d6-b193-e56e8ff2f812",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "4efdcbb5-15ae-41e0-9c1d-4157542da18d",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "pausa",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": []

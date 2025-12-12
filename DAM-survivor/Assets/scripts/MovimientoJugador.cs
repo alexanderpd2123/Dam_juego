@@ -3,59 +3,58 @@ using UnityEngine;
 public class MovimientoJugador : MonoBehaviour
 {
     ///////////////////////////////////// VARIABLES /////////////////////////////////
-    private bool puedeMoverse = true;
-    private float velocidadMovimiento = 5f;
-    private float velocidadRotacion = 720f; // Velocidad de rotación en grados por segundo
-    private Vector2 direccionPlana;
+    private bool puedeMoverse = true; // Bandera para habilitar/deshabilitar el movimiento
+    private float velocidadMovimiento = 5f; // Velocidad lineal de desplazamiento
+    private float velocidadRotacion = 720f; // Velocidad angular de rotación (rápida)
+    private Vector2 direccionPlana; // Vector 2D (X, Y) leído del Input
 
-    public Controles control;
+    public Controles control; // Instancia del Input Action Asset
 
     ///////////////////////////////////// FUNCIONES UNITY /////////////////////////////////
     
     private void Awake()
     {
-        control = new Controles();
+        control = new Controles(); // Inicializa la clase que maneja las acciones de Input
     }
 
     private void OnEnable()
     {
-        control.Enable();
+        control.Enable(); // Activa el mapa de acciones de Input
     }
     
     private void OnDisable()
     {
-        control.Disable();
+        control.Disable(); // Desactiva el mapa de acciones de Input
     }
 
     void Start()
     {
-        // Puedes añadir aquí cualquier inicialización si es necesario
+        // Se puede añadir inicialización aquí
     }
 
-    // Update se llama una vez por frame
+    // Lógica de movimiento y rotación por frame
     void Update()
     {
-       if (puedeMoverse)
+       if (puedeMoverse) // Solo se ejecuta si el movimiento está permitido
         {
-            // Coger el valor del vector 2 gracias a control
+            // Coge el valor de la entrada 2D (joystick, WASD, flechas)
             direccionPlana = control.Player.move.ReadValue<Vector2>();
             
-            // Cargamos el vector 3 a través del vector2 (ignoramos Y, usamos Z para la profundidad)
+            // Convierte el Vector2 (X, Y) en un Vector3 (X, Z) para el movimiento en el plano horizontal 3D
             Vector3 direccionMovimiento = new Vector3(direccionPlana.x, 0f, direccionPlana.y);
             
             // --- Lógica de Rotación ---
             
-            // Solo intentamos rotar si hay una entrada de movimiento significativa
+            // Solo rota si hay una entrada de movimiento perceptible
             if (direccionMovimiento.magnitude > 0.1f)
             {
-                // Normalizamos la dirección para obtener una magnitud de 1
+                // Normaliza la dirección para asegurar velocidad constante
                 direccionMovimiento.Normalize();
 
-                // Calcula la rotación (Quaternion) que mira en la dirección de movimiento
-                // Vector3.up indica la dirección "hacia arriba" del personaje
+                // Calcula la rotación (Quaternion) necesaria para mirar en la dirección de movimiento
                 Quaternion rotacionDeseada = Quaternion.LookRotation(direccionMovimiento, Vector3.up);
 
-                // Aplica la rotación de forma suave
+                // Rota el personaje suavemente hacia la dirección deseada (Interpolación)
                 transform.rotation = Quaternion.RotateTowards(
                     transform.rotation, 
                     rotacionDeseada, 
@@ -65,12 +64,10 @@ public class MovimientoJugador : MonoBehaviour
             
             // --- Lógica de Movimiento ---
             
-            // Movemos el personaje
-            // Nota: Usamos direccionMovimiento (ya normalizada si hubo entrada, o el vector sin normalizar si no)
+            // Mueve el personaje usando la dirección calculada (ya normalizada si hubo input)
             transform.position += direccionMovimiento * velocidadMovimiento * Time.deltaTime;
 
         }
     }
     
-    ///////////////////////////////////// FUNCIONES PROPIAS /////////////////////////////////
 }

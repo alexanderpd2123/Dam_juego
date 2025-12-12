@@ -235,6 +235,34 @@ public partial class @Controles: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""Pausa"",
+            ""id"": ""5afaf589-02e4-4fc6-8287-dc496d965f00"",
+            ""actions"": [
+                {
+                    ""name"": ""pausa"",
+                    ""type"": ""Button"",
+                    ""id"": ""c9527b6e-45d8-45d6-b193-e56e8ff2f812"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""4efdcbb5-15ae-41e0-9c1d-4157542da18d"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""pausa"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
@@ -249,6 +277,9 @@ public partial class @Controles: IInputActionCollection2, IDisposable
         m_Debug = asset.FindActionMap("Debug", throwIfNotFound: true);
         m_Debug_GiveWeapon = m_Debug.FindAction("GiveWeapon", throwIfNotFound: true);
         m_Debug_LevelUp = m_Debug.FindAction("LevelUp", throwIfNotFound: true);
+        // Pausa
+        m_Pausa = asset.FindActionMap("Pausa", throwIfNotFound: true);
+        m_Pausa_pausa = m_Pausa.FindAction("pausa", throwIfNotFound: true);
     }
 
     ~@Controles()
@@ -256,6 +287,7 @@ public partial class @Controles: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, Controles.Player.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_camera.enabled, "This will cause a leak and performance issues, Controles.camera.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Debug.enabled, "This will cause a leak and performance issues, Controles.Debug.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_Pausa.enabled, "This will cause a leak and performance issues, Controles.Pausa.Disable() has not been called.");
     }
 
     /// <summary>
@@ -626,6 +658,102 @@ public partial class @Controles: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="DebugActions" /> instance referencing this action map.
     /// </summary>
     public DebugActions @Debug => new DebugActions(this);
+
+    // Pausa
+    private readonly InputActionMap m_Pausa;
+    private List<IPausaActions> m_PausaActionsCallbackInterfaces = new List<IPausaActions>();
+    private readonly InputAction m_Pausa_pausa;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "Pausa".
+    /// </summary>
+    public struct PausaActions
+    {
+        private @Controles m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public PausaActions(@Controles wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "Pausa/pausa".
+        /// </summary>
+        public InputAction @pausa => m_Wrapper.m_Pausa_pausa;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_Pausa; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="PausaActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(PausaActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="PausaActions" />
+        public void AddCallbacks(IPausaActions instance)
+        {
+            if (instance == null || m_Wrapper.m_PausaActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_PausaActionsCallbackInterfaces.Add(instance);
+            @pausa.started += instance.OnPausa;
+            @pausa.performed += instance.OnPausa;
+            @pausa.canceled += instance.OnPausa;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="PausaActions" />
+        private void UnregisterCallbacks(IPausaActions instance)
+        {
+            @pausa.started -= instance.OnPausa;
+            @pausa.performed -= instance.OnPausa;
+            @pausa.canceled -= instance.OnPausa;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="PausaActions.UnregisterCallbacks(IPausaActions)" />.
+        /// </summary>
+        /// <seealso cref="PausaActions.UnregisterCallbacks(IPausaActions)" />
+        public void RemoveCallbacks(IPausaActions instance)
+        {
+            if (m_Wrapper.m_PausaActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="PausaActions.AddCallbacks(IPausaActions)" />
+        /// <seealso cref="PausaActions.RemoveCallbacks(IPausaActions)" />
+        /// <seealso cref="PausaActions.UnregisterCallbacks(IPausaActions)" />
+        public void SetCallbacks(IPausaActions instance)
+        {
+            foreach (var item in m_Wrapper.m_PausaActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_PausaActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="PausaActions" /> instance referencing this action map.
+    /// </summary>
+    public PausaActions @Pausa => new PausaActions(this);
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Player" which allows adding and removing callbacks.
     /// </summary>
@@ -677,5 +805,20 @@ public partial class @Controles: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnLevelUp(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Pausa" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="PausaActions.AddCallbacks(IPausaActions)" />
+    /// <seealso cref="PausaActions.RemoveCallbacks(IPausaActions)" />
+    public interface IPausaActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "pausa" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnPausa(InputAction.CallbackContext context);
     }
 }
